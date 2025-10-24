@@ -21,11 +21,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 //  Middleware
-app.use(cors({
-  origin: "http://localhost:5173", 
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
+
+app.use(
+  cors({
+    origin: [
+      "https://olx-frontend-three.vercel.app", // frontend vercel URL
+      "http://localhost:5173", // optional: local testing ke liye
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 //  Serve uploaded images statically
