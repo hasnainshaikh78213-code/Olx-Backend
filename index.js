@@ -25,7 +25,10 @@ const __dirname = path.dirname(__filename);
 app.use(
   cors({
     origin: [
-      "https://olx-frontend-three.vercel.app", "http://localhost:5173", 
+      "https://olx-frontend-three.vercel.app", // main domain
+      "https://olx-frontend-4rbhwu0qi-hasnainshaikh78213-codes-projects.vercel.app", // optional: preview link
+      "http://localhost:5173"
+      // "https://olx-frontend-three.vercel.app", "http://localhost:5173", 
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
