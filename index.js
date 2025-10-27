@@ -26,7 +26,7 @@ app.use(
   cors({
     origin: [
       "https://olx-frontend-three.vercel.app", // main domain
-      "http://localhost:5173"
+      // "http://localhost:5173"
        
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
