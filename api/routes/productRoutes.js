@@ -14,11 +14,13 @@ import { getProductById } from "../controllers/productController.js";
 const router = express.Router();
 
 // Multer setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-});
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => cb(null, "uploads/"),
+//   filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+// });
+// const upload = multer({ storage });
 
 // Routes
 // router.get("/all", protect, getAllProducts);
