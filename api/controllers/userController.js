@@ -13,7 +13,7 @@ export const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const isAdmin = email === "developers@gmail.com";
+    const isAdmin = email === "admin@gmail.com";
 
     const newUser = new User({ name, email, password: hashedPassword, isAdmin });
     await newUser.save();
