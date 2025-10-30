@@ -84,34 +84,38 @@ export const getProfile = async (req, res) => {
 };
 
 // ==================== Update Profile ====================
+// ==================== Update Profile ====================
 export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
     user.username = req.body.username || user.username;
 
-    // ✅ Cloudinary upload if image provided
+    // ✅ If new image uploaded, replace old one in Cloudinary
     if (req.file) {
       const b64 = Buffer.from(req.file.buffer).toString("base64");
       const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
       const uploadResponse = await cloudinary.uploader.upload(dataURI, {
         folder: "olx_avatars",
       });
 
-      // ✅ Save only secure_url (no local prefix)
-      user.avatar = uploadResponse.secure_url;
+      user.avatar = uploadResponse.secure_url; // ✅ Save only Cloudinary URL
     }
 
     const updatedUser = await user.save();
 
-    res.json({
+    // ✅ Send clean, full data (Cloudinary already gives https)
+    const userWithFullAvatar = {
       ...updatedUser._doc,
       avatar: updatedUser.avatar || null,
-    });
+    };
+
+    res.json(userWithFullAvatar);
   } catch (err) {
     console.error("Profile update error:", err);
     res.status(500).json({ message: "Server error" });
