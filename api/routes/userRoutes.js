@@ -11,11 +11,9 @@ import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// ==================== Multer setup for profile image ====================
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-});
+// ==================== Multer setup for Cloudinary (Memory Storage) ====================
+// Vercel diskStorage use nahi kar sakta, isliye memoryStorage use kar rahe hain
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // ==================== Auth Routes ====================
