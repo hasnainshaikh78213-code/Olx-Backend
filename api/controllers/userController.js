@@ -1,6 +1,8 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import cloudinary from "../config/cloudinary.js";
+
 
 // ==================== Signup ====================
 export const signup = async (req, res) => {
@@ -110,8 +112,15 @@ export const updateProfile = async (req, res) => {
 
     //  Update image if provided
     if (req.file) {
-      user.avatar = req.file.path;
-    }
+  const b64 = Buffer.from(req.file.buffer).toString("base64");
+  const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+  const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+    folder: "olx_avatars",
+  });
+
+  user.avatar = uploadResponse.secure_url;
+}
 
     const updatedUser = await user.save();
 
