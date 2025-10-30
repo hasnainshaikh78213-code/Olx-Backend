@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../config/cloudinary.js";
 
-
 // ==================== Signup ====================
 export const signup = async (req, res) => {
   try {
@@ -14,7 +13,6 @@ export const signup = async (req, res) => {
       return res.status(400).json({ msg: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const isAdmin = email === "developers@gmail.com";
 
     const newUser = new User({ name, email, password: hashedPassword, isAdmin });
@@ -26,10 +24,12 @@ export const signup = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    //  Send full avatar URL (if any)
+    // ✅ Handle avatar URL safely
     const userWithFullAvatar = {
       ...newUser._doc,
-      avatar: newUser.avatar
+      avatar: newUser.avatar?.startsWith("http")
+        ? newUser.avatar
+        : newUser.avatar
         ? `${req.protocol}://${req.get("host")}/${newUser.avatar.replace(/\\/g, "/")}`
         : null,
     };
@@ -61,10 +61,11 @@ export const login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    //  Include full avatar URL
     const userWithFullAvatar = {
       ...user._doc,
-      avatar: user.avatar
+      avatar: user.avatar?.startsWith("http")
+        ? user.avatar
+        : user.avatar
         ? `${req.protocol}://${req.get("host")}/${user.avatar.replace(/\\/g, "/")}`
         : null,
     };
@@ -83,10 +84,11 @@ export const getProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    //  Always send complete avatar URL
     const userWithFullAvatar = {
       ...user._doc,
-      avatar: user.avatar
+      avatar: user.avatar?.startsWith("http")
+        ? user.avatar
+        : user.avatar
         ? `${req.protocol}://${req.get("host")}/${user.avatar.replace(/\\/g, "/")}`
         : null,
     };
@@ -110,24 +112,26 @@ export const updateProfile = async (req, res) => {
     user.email = req.body.email || user.email;
     user.username = req.body.username || user.username;
 
-    //  Update image if provided
+    // ✅ Upload to Cloudinary if new file is added
     if (req.file) {
-  const b64 = Buffer.from(req.file.buffer).toString("base64");
-  const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
-  const uploadResponse = await cloudinary.uploader.upload(dataURI, {
-    folder: "olx_avatars",
-  });
+      const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+        folder: "olx_avatars",
+      });
 
-  user.avatar = uploadResponse.secure_url;
-}
+      user.avatar = uploadResponse.secure_url;
+    }
 
     const updatedUser = await user.save();
 
-    //  Return full avatar URL
+    // ✅ Handle Cloudinary URL properly
     const userWithFullAvatar = {
       ...updatedUser._doc,
-      avatar: updatedUser.avatar
+      avatar: updatedUser.avatar?.startsWith("http")
+        ? updatedUser.avatar
+        : updatedUser.avatar
         ? `${req.protocol}://${req.get("host")}/${updatedUser.avatar.replace(/\\/g, "/")}`
         : null,
     };
