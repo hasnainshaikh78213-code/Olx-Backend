@@ -24,20 +24,13 @@ export const signup = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // ✅ Handle avatar URL safely
-    const userWithFullAvatar = {
-      ...newUser._doc,
-      avatar: newUser.avatar?.startsWith("http")
-        ? newUser.avatar
-        : newUser.avatar
-        ? `${req.protocol}://${req.get("host")}/${newUser.avatar.replace(/\\/g, "/")}`
-        : null,
-    };
-
     res.status(201).json({
       msg: "User created successfully",
       token,
-      user: userWithFullAvatar,
+      user: {
+        ...newUser._doc,
+        avatar: newUser.avatar || null,
+      },
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
@@ -61,16 +54,14 @@ export const login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    const userWithFullAvatar = {
-      ...user._doc,
-      avatar: user.avatar?.startsWith("http")
-        ? user.avatar
-        : user.avatar
-        ? `${req.protocol}://${req.get("host")}/${user.avatar.replace(/\\/g, "/")}`
-        : null,
-    };
-
-    res.json({ msg: "Login successful", token, user: userWithFullAvatar });
+    res.json({
+      msg: "Login successful",
+      token,
+      user: {
+        ...user._doc,
+        avatar: user.avatar || null,
+      },
+    });
   } catch (err) {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
@@ -80,20 +71,12 @@ export const login = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    const userWithFullAvatar = {
+    res.json({
       ...user._doc,
-      avatar: user.avatar?.startsWith("http")
-        ? user.avatar
-        : user.avatar
-        ? `${req.protocol}://${req.get("host")}/${user.avatar.replace(/\\/g, "/")}`
-        : null,
-    };
-
-    res.json(userWithFullAvatar);
+      avatar: user.avatar || null,
+    });
   } catch (err) {
     console.error("Profile fetch error:", err);
     res.status(500).json({ message: "Server error" });
@@ -104,15 +87,13 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
     user.username = req.body.username || user.username;
 
-    // ✅ Upload to Cloudinary if new file is added
+    // ✅ Cloudinary upload if image provided
     if (req.file) {
       const b64 = Buffer.from(req.file.buffer).toString("base64");
       const dataURI = `data:${req.file.mimetype};base64,${b64}`;
@@ -121,22 +102,16 @@ export const updateProfile = async (req, res) => {
         folder: "olx_avatars",
       });
 
+      // ✅ Save only secure_url (no local prefix)
       user.avatar = uploadResponse.secure_url;
     }
 
     const updatedUser = await user.save();
 
-    // ✅ Handle Cloudinary URL properly
-    const userWithFullAvatar = {
+    res.json({
       ...updatedUser._doc,
-      avatar: updatedUser.avatar?.startsWith("http")
-        ? updatedUser.avatar
-        : updatedUser.avatar
-        ? `${req.protocol}://${req.get("host")}/${updatedUser.avatar.replace(/\\/g, "/")}`
-        : null,
-    };
-
-    res.json(userWithFullAvatar);
+      avatar: updatedUser.avatar || null,
+    });
   } catch (err) {
     console.error("Profile update error:", err);
     res.status(500).json({ message: "Server error" });
